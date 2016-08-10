@@ -1,4 +1,5 @@
 """defines the business logic"""
+import os
 from trytond.model import ModelView, ModelSQL, fields
 from trytond.pyson import If, Eval, Bool, Not
 from trytond.pool import Pool
@@ -9,6 +10,11 @@ import datetime
 
 
 __all__ = ['Hshn', 'HshnReport']
+
+
+MAIL_FILE_PATH = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    'mail.txt')
 
 
 class Hshn(ModelSQL, ModelView):
@@ -203,7 +209,7 @@ class Hshn(ModelSQL, ModelView):
 
         # Read in the mail content
         mail_content = {}
-        file = open('../trytond/modules/hshn/mail.txt')
+        file = open(MAIL_FILE_PATH)
         for line in file:
             try:
                 name, var = line.partition('=')
@@ -211,8 +217,9 @@ class Hshn(ModelSQL, ModelView):
                 continue
             mail_content[name.strip()] = var
 
-        return
         # send a mail
+        row = row[0]
+
         if row.mail is True:
 
             # set the spo
@@ -247,14 +254,21 @@ class HshnReport(CompanyReport):
     @classmethod
     def _get_records(cls, ids, model, data):
         Hshn = Pool().get('hshn.hshn')
-        return Hshn.search([('id', '=', 7)])
+        return Hshn.search([('id', '=', data['ids'])])
 
     @classmethod
     def get_context(cls, records, data):
         report_context = super(HshnReport, cls).get_context(records, data)
-        Company = Pool().get('company.company')
-        company = Company.search([('id', '=', 1)])
-        report_context['company'] = company[0]
+        # 'company' automatically added to report_context
+        # with help of CompanyReport.
+
+        # user = report_context['user']
+        # raise Exception(user)
+
+        # raise Exception(records, data)
+
+        # raise Exception(records[0].company)
+
+        # report_context['company'] = records[0].company
+
         return report_context
-
-
